@@ -17,6 +17,14 @@ import type {
   EventHandler,
   UnsubscribeFn,
   SubscriptionTopic,
+  CreateEscrowParams,
+  EscrowActionParams,
+  ResolveDisputeParams,
+  GetEscrowParams,
+  EscrowRecord,
+  EscrowMutationResult,
+  EscrowEvent,
+  EscrowEventFilter,
 } from "./types.js";
 import type { SignedTx } from "@sierpinski/wallet";
 
@@ -30,6 +38,8 @@ export class SierpinskiClient {
   #wsHandlers = new Map<SubscriptionTopic, Set<EventHandler<NodeEvent>>>();
   #wsReconnectTimer: ReturnType<typeof setTimeout> | null = null;
   #wsConnecting = false;
+  #escrowWs: WebSocket | null = null;
+  #escrowHandlers = new Set<{ filter: EscrowEventFilter; handler: EventHandler<EscrowEvent> }>();
 
   constructor(config: SierpinskiClientConfig) {
     const nodeUrl = config.nodeUrl.replace(/\/$/, "");
@@ -142,6 +152,87 @@ export class SierpinskiClient {
     return this.#rpc<T>(method, params);
   }
 
+  // ── Escrow RPC wrappers ────────────────────────────────────────────────
+
+  async createEscrow(params: CreateEscrowParams): Promise<EscrowMutationResult> {
+    const raw = await this.#rpc<Record<string, unknown>>("createEscrow", {
+      escrow_id: params.escrow_id?.toString(),
+      mode: params.mode,
+      buyer: toWireActor(params.buyer),
+      seller: toWireActor(params.seller),
+      arbiter: params.arbiter !== undefined ? toWireActor(params.arbiter) : undefined,
+      amount: params.amount.toString(),
+      auto_refund_at: params.auto_refund_at?.toString(),
+    });
+    return mapEscrowMutationResult(raw);
+  }
+
+  async fundEscrow(params: EscrowActionParams): Promise<EscrowMutationResult> {
+    const raw = await this.#rpc<Record<string, unknown>>("fundEscrow", {
+      escrow_id: params.escrow_id.toString(),
+      actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
+    });
+    return mapEscrowMutationResult(raw);
+  }
+
+  async releaseEscrow(params: EscrowActionParams): Promise<EscrowMutationResult> {
+    const raw = await this.#rpc<Record<string, unknown>>("releaseEscrow", {
+      escrow_id: params.escrow_id.toString(),
+      actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
+    });
+    return mapEscrowMutationResult(raw);
+  }
+
+  async refundEscrow(params: EscrowActionParams): Promise<EscrowMutationResult> {
+    const raw = await this.#rpc<Record<string, unknown>>("refundEscrow", {
+      escrow_id: params.escrow_id.toString(),
+      actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
+    });
+    return mapEscrowMutationResult(raw);
+  }
+
+  async disputeEscrow(params: EscrowActionParams): Promise<EscrowMutationResult> {
+    const raw = await this.#rpc<Record<string, unknown>>("disputeEscrow", {
+      escrow_id: params.escrow_id.toString(),
+      actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
+    });
+    return mapEscrowMutationResult(raw);
+  }
+
+  async resolveDispute(params: ResolveDisputeParams): Promise<EscrowMutationResult> {
+    const raw = await this.#rpc<Record<string, unknown>>("resolveDispute", {
+      escrow_id: params.escrow_id.toString(),
+      actor: toWireActor(params.actor),
+      outcome: params.outcome,
+    });
+    return mapEscrowMutationResult(raw);
+  }
+
+  async getEscrow(params: GetEscrowParams): Promise<EscrowRecord> {
+    const raw = await this.#rpc<Record<string, unknown>>("getEscrow", {
+      escrow_id: params.escrow_id.toString(),
+      now: params.now?.toString(),
+    });
+    return mapEscrowRecord(raw);
+  }
+
+  subscribeEscrowEvents(
+    filter: EscrowEventFilter,
+    handler: EventHandler<EscrowEvent>,
+  ): UnsubscribeFn {
+    const entry = { filter, handler };
+    this.#escrowHandlers.add(entry);
+    this.#ensureEscrowWs();
+
+    return () => {
+      this.#escrowHandlers.delete(entry);
+      if (this.#escrowHandlers.size === 0) {
+        this.#escrowWs?.close();
+        this.#escrowWs = null;
+      }
+    };
+  }
+
   // ── WebSocket event stream ────────────────────────────────────────────────
 
   /** Subscribe to real-time node events. Returns unsubscribe function. */
@@ -235,9 +326,108 @@ export class SierpinskiClient {
     this.#ws = null;
     this.#wsReady = false;
     this.#wsConnecting = false;
+    this.#escrowWs?.close();
+    this.#escrowWs = null;
+    this.#escrowHandlers.clear();
   }
 
   get wsConnected(): boolean {
     return this.#wsReady;
   }
+
+  #ensureEscrowWs(): void {
+    if (this.#escrowWs || this.#escrowHandlers.size === 0) return;
+    const ws = new WebSocket(this.#cfg.wsUrl);
+    this.#escrowWs = ws;
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ action: "subscribe", topic: "escrow_events" }));
+    };
+
+    ws.onmessage = (ev: MessageEvent) => {
+      try {
+        const parsed = JSON.parse(String(ev.data)) as Record<string, unknown>;
+        const eventName = typeof parsed.event === "string" ? parsed.event : "";
+        if (eventName !== "escrow_event") return;
+        const data = parsed.data as Record<string, unknown> | undefined;
+        if (!data) return;
+        const event: EscrowEvent = {
+          action: String(data.action ?? ""),
+          escrow_id: toBigInt(data.escrow_id),
+          status: String(data.status ?? "created") as EscrowEvent["status"],
+          buyer: toBigInt(data.buyer),
+          seller: toBigInt(data.seller),
+          amount: toBigInt(data.amount),
+          timestamp: toBigInt(data.timestamp),
+          raw: parsed,
+        };
+        for (const entry of this.#escrowHandlers) {
+          if (!matchesEscrowFilter(event, entry.filter)) continue;
+          entry.handler(event);
+        }
+      } catch {
+        // ignore malformed payload
+      }
+    };
+
+    ws.onclose = () => {
+      this.#escrowWs = null;
+      if (this.#escrowHandlers.size > 0) {
+        setTimeout(() => this.#ensureEscrowWs(), this.#cfg.reconnectIntervalMs);
+      }
+    };
+  }
+}
+
+function toWireActor(value: string | bigint): string {
+  return typeof value === "bigint" ? value.toString() : value;
+}
+
+function toBigInt(value: unknown): bigint {
+  if (typeof value === "bigint") return value;
+  if (typeof value === "number") return BigInt(Math.trunc(value));
+  if (typeof value === "string") return BigInt(value);
+  return 0n;
+}
+
+function toBoolean(value: unknown): boolean {
+  return value === true || value === "true";
+}
+
+function mapEscrowMutationResult(raw: Record<string, unknown>): EscrowMutationResult {
+  const out: EscrowMutationResult = {
+    accepted: toBoolean(raw.accepted),
+    escrow_id: toBigInt(raw.escrow_id),
+    status: String(raw.status ?? "created") as EscrowMutationResult["status"],
+  };
+  if (raw.settled !== undefined) out.settled = toBoolean(raw.settled);
+  if (raw.outcome !== undefined) {
+    out.outcome = String(raw.outcome) as "release" | "refund";
+  }
+  return out;
+}
+
+function mapEscrowRecord(raw: Record<string, unknown>): EscrowRecord {
+  return {
+    accepted: toBoolean(raw.accepted),
+    escrow_id: toBigInt(raw.escrow_id),
+    mode: String(raw.mode ?? "2of2") as EscrowRecord["mode"],
+    status: String(raw.status ?? "created") as EscrowRecord["status"],
+    buyer: toBigInt(raw.buyer),
+    seller: toBigInt(raw.seller),
+    arbiter: toBigInt(raw.arbiter),
+    amount: toBigInt(raw.amount),
+    created_at: toBigInt(raw.created_at),
+    auto_refund_at: toBigInt(raw.auto_refund_at),
+    funded_at: toBigInt(raw.funded_at),
+    closed_at: toBigInt(raw.closed_at),
+    settlement: String(raw.settlement ?? "none") as EscrowRecord["settlement"],
+  };
+}
+
+function matchesEscrowFilter(event: EscrowEvent, filter: EscrowEventFilter): boolean {
+  if (filter.action && filter.action !== event.action) return false;
+  if (filter.escrowId !== undefined && filter.escrowId !== event.escrow_id) return false;
+  if (filter.status && filter.status !== event.status) return false;
+  return true;
 }

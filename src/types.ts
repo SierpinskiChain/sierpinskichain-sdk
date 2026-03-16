@@ -87,7 +87,12 @@ export interface SierpinskiClientConfig {
 
 // ── WebSocket subscription types ──────────────────────────────────────────────
 
-export type SubscriptionTopic = "blocks" | "transactions" | "peers";
+export type SubscriptionTopic =
+  | "blocks"
+  | "transactions"
+  | "peers"
+  | "contract_events"
+  | "escrow_events";
 
 export interface BlockEvent {
   type: "block";
@@ -103,3 +108,81 @@ export type NodeEvent = BlockEvent | TxEvent;
 
 export type EventHandler<T> = (event: T) => void;
 export type UnsubscribeFn = () => void;
+
+// ── Escrow types ────────────────────────────────────────────────────────────
+
+export type EscrowMode = "2of2" | "2of3";
+export type EscrowStatus =
+  | "created"
+  | "funded"
+  | "released"
+  | "refunded"
+  | "disputed"
+  | "resolved";
+export type EscrowOutcome = "release" | "refund";
+
+export interface CreateEscrowParams {
+  escrow_id?: bigint;
+  mode: EscrowMode;
+  buyer: string | bigint;
+  seller: string | bigint;
+  arbiter?: string | bigint;
+  amount: bigint;
+  auto_refund_at?: bigint;
+}
+
+export interface EscrowActionParams {
+  escrow_id: bigint;
+  actor?: string | bigint;
+}
+
+export interface ResolveDisputeParams extends EscrowActionParams {
+  actor: string | bigint;
+  outcome: EscrowOutcome;
+}
+
+export interface GetEscrowParams {
+  escrow_id: bigint;
+  now?: bigint;
+}
+
+export interface EscrowRecord {
+  accepted: boolean;
+  escrow_id: bigint;
+  mode: EscrowMode;
+  status: EscrowStatus;
+  buyer: bigint;
+  seller: bigint;
+  arbiter: bigint;
+  amount: bigint;
+  created_at: bigint;
+  auto_refund_at: bigint;
+  funded_at: bigint;
+  closed_at: bigint;
+  settlement: "none" | EscrowOutcome;
+}
+
+export interface EscrowMutationResult {
+  accepted: boolean;
+  escrow_id: bigint;
+  status: EscrowStatus;
+  settled?: boolean;
+  outcome?: EscrowOutcome;
+}
+
+export interface EscrowEvent {
+  action: string;
+  escrow_id: bigint;
+  status: EscrowStatus;
+  buyer: bigint;
+  seller: bigint;
+  amount: bigint;
+  timestamp: bigint;
+  raw: unknown;
+}
+
+export interface EscrowEventFilter {
+  action?: string;
+  escrowId?: bigint;
+  status?: EscrowStatus;
+}

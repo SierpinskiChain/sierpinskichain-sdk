@@ -48,21 +48,55 @@ const SAMPLE_TX: Transaction = {
   status: "confirmed",
 };
 
+class FakeWebSocket {
+  static instances: FakeWebSocket[] = [];
+  onopen: ((ev: Event) => void) | null = null;
+  onmessage: ((ev: MessageEvent) => void) | null = null;
+  onclose: ((ev: CloseEvent) => void) | null = null;
+  sent: string[] = [];
+  readonly url: string;
+
+  constructor(url: string | URL) {
+    this.url = String(url);
+    FakeWebSocket.instances.push(this);
+  }
+
+  send(payload: string): void {
+    this.sent.push(payload);
+  }
+
+  close(): void {
+    this.onclose?.({} as CloseEvent);
+  }
+
+  emitOpen(): void {
+    this.onopen?.({} as Event);
+  }
+
+  emitJson(data: unknown): void {
+    this.onmessage?.({ data: JSON.stringify(data) } as MessageEvent);
+  }
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe("SierpinskiClient", () => {
   let client: SierpinskiClient;
   let fetchMock: ReturnType<typeof mock>;
+  const originalWs = globalThis.WebSocket;
 
   beforeEach(() => {
     client = new SierpinskiClient({ nodeUrl: "http://localhost:40410" });
     fetchMock = mock(global.fetch);
     global.fetch = fetchMock as unknown as typeof global.fetch;
+    FakeWebSocket.instances = [];
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
   });
 
   afterEach(() => {
     // restore original fetch
     global.fetch = fetch;
+    globalThis.WebSocket = originalWs;
     client.disconnect();
   });
 
@@ -254,6 +288,73 @@ describe("SierpinskiClient", () => {
     ) as { method: string; params: { contract: string } };
     expect(body.method).toBe("deployContract");
     expect(body.params.contract).toBe("counter");
+  });
+
+  test("createEscrow serializes bigint fields as strings", async () => {
+    fetchMock.mockResolvedValueOnce(
+      rpcOk({ accepted: true, escrow_id: "9001", status: "created" }),
+    );
+    const out = await client.createEscrow({
+      escrow_id: 9001n,
+      mode: "2of2",
+      buyer: "buyer000.sp",
+      seller: "seller00.sp",
+      amount: 1200n,
+      auto_refund_at: 2_000_000_000n,
+    });
+    expect(out.accepted).toBe(true);
+    expect(out.escrow_id).toBe(9001n);
+
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string,
+    ) as { method: string; params: Record<string, string> };
+    expect(body.method).toBe("createEscrow");
+    expect(body.params.escrow_id).toBe("9001");
+    expect(body.params.amount).toBe("1200");
+    expect(body.params.auto_refund_at).toBe("2000000000");
+  });
+
+  test("subscribeEscrowEvents subscribes and filters by escrowId", async () => {
+    const seen: bigint[] = [];
+    const unsub = client.subscribeEscrowEvents(
+      { escrowId: 42n },
+      (ev) => seen.push(ev.escrow_id),
+    );
+
+    const ws = FakeWebSocket.instances[0]!;
+    expect(ws.url).toBe("ws://localhost:40410/ws");
+    ws.emitOpen();
+    expect(JSON.parse(ws.sent[0] as string)).toEqual({
+      action: "subscribe",
+      topic: "escrow_events",
+    });
+
+    ws.emitJson({
+      event: "escrow_event",
+      data: {
+        action: "funded",
+        escrow_id: "41",
+        status: "funded",
+        buyer: "1",
+        seller: "2",
+        amount: "100",
+        timestamp: "10",
+      },
+    });
+    ws.emitJson({
+      event: "escrow_event",
+      data: {
+        action: "funded",
+        escrow_id: "42",
+        status: "funded",
+        buyer: "1",
+        seller: "2",
+        amount: "100",
+        timestamp: "10",
+      },
+    });
+    expect(seen).toEqual([42n]);
+    unsub();
   });
 
   // ── wsConnected ─────────────────────────────────────────────────────────
