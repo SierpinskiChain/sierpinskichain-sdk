@@ -33,12 +33,12 @@ const SAMPLE_BLOCK: Block = {
   parentHash: "cafebabe",
   timestamp: 1_700_000_000,
   transactions: ["tx1", "tx2"],
-  validator: "abcdef01.sp",
+  validator: "abcdef12.sp",
 };
 
 const SAMPLE_TX: Transaction = {
   hash: "txhash1",
-  from: "abcdef01.sp",
+  from: "abcdef12.sp",
   to: "12345678.sp",
   amount: 1000n,
   nonce: 1n,
@@ -132,19 +132,19 @@ describe("SierpinskiClient", () => {
 
   test("getBalance returns bigint", async () => {
     fetchMock.mockResolvedValueOnce(
-      rpcOk({ address: "abcdef01.sp", balance: "5000000" }),
+      rpcOk({ address: "abcdef12.sp", balance: "5000000" }),
     );
-    const bal = await client.getBalance("abcdef01.sp");
+    const bal = await client.getBalance("abcdef12.sp");
     expect(bal).toBe(5_000_000n);
     expect(typeof bal).toBe("bigint");
   });
 
   test("getBalanceFull includes address", async () => {
     fetchMock.mockResolvedValueOnce(
-      rpcOk({ address: "abcdef01.sp", balance: "1234" }),
+      rpcOk({ address: "abcdef12.sp", balance: "1234" }),
     );
-    const result = await client.getBalanceFull("abcdef01.sp");
-    expect(result.address).toBe("abcdef01.sp");
+    const result = await client.getBalanceFull("abcdef12.sp");
+    expect(result.address).toBe("abcdef12.sp");
     expect(result.balance).toBe(1234n);
   });
 
@@ -156,7 +156,7 @@ describe("SierpinskiClient", () => {
     fetchMock.mockResolvedValueOnce(rpcOk(wire));
     const tx = await client.getTransaction("txhash1");
     expect(tx.hash).toBe("txhash1");
-    expect(tx.from).toBe("abcdef01.sp");
+    expect(tx.from).toBe("abcdef12.sp");
     expect(tx.status).toBe("confirmed");
   });
 
@@ -167,7 +167,7 @@ describe("SierpinskiClient", () => {
       rpcOk({ txHash: "newhash", status: "accepted" }),
     );
     const result = await client.sendTransaction({
-      from: "abcdef01.sp",
+      from: "abcdef12.sp",
       to: "12345678.sp",
       amount: 500n,
       nonce: 3n,
