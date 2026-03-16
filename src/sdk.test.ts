@@ -57,7 +57,7 @@ describe("SierpinskiClient", () => {
   beforeEach(() => {
     client = new SierpinskiClient({ nodeUrl: "http://localhost:40410" });
     fetchMock = mock(global.fetch);
-    global.fetch = fetchMock as typeof global.fetch;
+    global.fetch = fetchMock as unknown as typeof global.fetch;
   });
 
   afterEach(() => {
@@ -98,7 +98,10 @@ describe("SierpinskiClient", () => {
     await client.getNodeInfo();
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("http://localhost:40410/rpc");
-    const body = JSON.parse(init.body as string) as { method: string };
+    const body = JSON.parse(init.body as string) as {
+      jsonrpc: string;
+      method: string;
+    };
     expect(body.method).toBe("getNodeInfo");
     expect(body.jsonrpc).toBe("2.0");
   });
@@ -238,6 +241,19 @@ describe("SierpinskiClient", () => {
       ) as { id: number }
     ).id;
     expect(id2).toBe(id1 + 1);
+  });
+
+  test("rpc() performs generic method call", async () => {
+    fetchMock.mockResolvedValueOnce(rpcOk({ accepted: true }));
+    const out = await client.rpc<{ accepted: boolean }>("deployContract", {
+      contract: "counter",
+    });
+    expect(out.accepted).toBe(true);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string,
+    ) as { method: string; params: { contract: string } };
+    expect(body.method).toBe("deployContract");
+    expect(body.params.contract).toBe("counter");
   });
 
   // ── wsConnected ─────────────────────────────────────────────────────────

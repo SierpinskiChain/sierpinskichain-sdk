@@ -137,6 +137,11 @@ export class SierpinskiClient {
     });
   }
 
+  /** Generic JSON-RPC call for SDK extension packages. */
+  rpc<T>(method: string, params?: unknown): Promise<T> {
+    return this.#rpc<T>(method, params);
+  }
+
   // ── WebSocket event stream ────────────────────────────────────────────────
 
   /** Subscribe to real-time node events. Returns unsubscribe function. */
