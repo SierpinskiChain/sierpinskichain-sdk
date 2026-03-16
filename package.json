@@ -1,0 +1,33 @@
+{
+  "name": "@sierpinski/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript/ESM SDK for the Sierpinski network — typed RPC client, React hooks",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./hooks": "./src/hooks.ts"
+  },
+  "files": ["src"],
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sierpinski/wallet-ts": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": { "optional": true }
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/bun": "latest",
+    "@types/react": "^18.0.0"
+  },
+  "keywords": ["sierpinski", "sdk", "rpc", "blockchain", "react-hooks"],
+  "license": "MIT"
+}
