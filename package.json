@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sierpinski/wallet-ts": "workspace:*"
+    "@sierpinski/wallet": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18.0.0"

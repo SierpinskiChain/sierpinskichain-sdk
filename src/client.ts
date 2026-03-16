@@ -18,7 +18,7 @@ import type {
   UnsubscribeFn,
   SubscriptionTopic,
 } from "./types.js";
-import type { SignedTx } from "@sierpinski/wallet-ts";
+import type { SignedTx } from "@sierpinski/wallet";
 
 export class SierpinskiClient {
   readonly #cfg: Required<SierpinskiClientConfig>;
