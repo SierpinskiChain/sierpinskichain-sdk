@@ -290,7 +290,7 @@ describe("SierpinskiClient", () => {
     expect(body.params.contract).toBe("counter");
   });
 
-  test("createEscrow serializes bigint fields as strings", async () => {
+  test("createEscrow serializes escrow bigint fields as JSON numbers", async () => {
     fetchMock.mockResolvedValueOnce(
       rpcOk({ accepted: true, escrow_id: "9001", status: "created" }),
     );
@@ -307,11 +307,11 @@ describe("SierpinskiClient", () => {
 
     const body = JSON.parse(
       (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string,
-    ) as { method: string; params: Record<string, string> };
+    ) as { method: string; params: Record<string, unknown> };
     expect(body.method).toBe("createEscrow");
-    expect(body.params.escrow_id).toBe("9001");
-    expect(body.params.amount).toBe("1200");
-    expect(body.params.auto_refund_at).toBe("2000000000");
+    expect(body.params.escrow_id).toBe(9001);
+    expect(body.params.amount).toBe(1200);
+    expect(body.params.auto_refund_at).toBe(2_000_000_000);
   });
 
   test("subscribeEscrowEvents subscribes and filters by escrowId", async () => {

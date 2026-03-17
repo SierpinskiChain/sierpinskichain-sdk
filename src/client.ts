@@ -156,20 +156,26 @@ export class SierpinskiClient {
 
   async createEscrow(params: CreateEscrowParams): Promise<EscrowMutationResult> {
     const raw = await this.#rpc<Record<string, unknown>>("createEscrow", {
-      escrow_id: params.escrow_id?.toString(),
+      escrow_id:
+        params.escrow_id !== undefined
+          ? toWireInteger(params.escrow_id, "escrow_id")
+          : undefined,
       mode: params.mode,
       buyer: toWireActor(params.buyer),
       seller: toWireActor(params.seller),
       arbiter: params.arbiter !== undefined ? toWireActor(params.arbiter) : undefined,
-      amount: params.amount.toString(),
-      auto_refund_at: params.auto_refund_at?.toString(),
+      amount: toWireInteger(params.amount, "amount"),
+      auto_refund_at:
+        params.auto_refund_at !== undefined
+          ? toWireInteger(params.auto_refund_at, "auto_refund_at")
+          : undefined,
     });
     return mapEscrowMutationResult(raw);
   }
 
   async fundEscrow(params: EscrowActionParams): Promise<EscrowMutationResult> {
     const raw = await this.#rpc<Record<string, unknown>>("fundEscrow", {
-      escrow_id: params.escrow_id.toString(),
+      escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
       actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
     });
     return mapEscrowMutationResult(raw);
@@ -177,7 +183,7 @@ export class SierpinskiClient {
 
   async releaseEscrow(params: EscrowActionParams): Promise<EscrowMutationResult> {
     const raw = await this.#rpc<Record<string, unknown>>("releaseEscrow", {
-      escrow_id: params.escrow_id.toString(),
+      escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
       actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
     });
     return mapEscrowMutationResult(raw);
@@ -185,7 +191,7 @@ export class SierpinskiClient {
 
   async refundEscrow(params: EscrowActionParams): Promise<EscrowMutationResult> {
     const raw = await this.#rpc<Record<string, unknown>>("refundEscrow", {
-      escrow_id: params.escrow_id.toString(),
+      escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
       actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
     });
     return mapEscrowMutationResult(raw);
@@ -193,7 +199,7 @@ export class SierpinskiClient {
 
   async disputeEscrow(params: EscrowActionParams): Promise<EscrowMutationResult> {
     const raw = await this.#rpc<Record<string, unknown>>("disputeEscrow", {
-      escrow_id: params.escrow_id.toString(),
+      escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
       actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
     });
     return mapEscrowMutationResult(raw);
@@ -201,7 +207,7 @@ export class SierpinskiClient {
 
   async resolveDispute(params: ResolveDisputeParams): Promise<EscrowMutationResult> {
     const raw = await this.#rpc<Record<string, unknown>>("resolveDispute", {
-      escrow_id: params.escrow_id.toString(),
+      escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
       actor: toWireActor(params.actor),
       outcome: params.outcome,
     });
@@ -210,8 +216,8 @@ export class SierpinskiClient {
 
   async getEscrow(params: GetEscrowParams): Promise<EscrowRecord> {
     const raw = await this.#rpc<Record<string, unknown>>("getEscrow", {
-      escrow_id: params.escrow_id.toString(),
-      now: params.now?.toString(),
+      escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
+      now: params.now !== undefined ? toWireInteger(params.now, "now") : undefined,
     });
     return mapEscrowRecord(raw);
   }
@@ -381,6 +387,17 @@ export class SierpinskiClient {
 
 function toWireActor(value: string | bigint): string {
   return typeof value === "bigint" ? value.toString() : value;
+}
+
+function toWireInteger(value: bigint, field: string): number {
+  if (value < 0n) {
+    throw new Error(`${field} must be non-negative`);
+  }
+  const out = Number(value);
+  if (!Number.isSafeInteger(out)) {
+    throw new Error(`${field} exceeds JSON safe integer range`);
+  }
+  return out;
 }
 
 function toBigInt(value: unknown): bigint {
