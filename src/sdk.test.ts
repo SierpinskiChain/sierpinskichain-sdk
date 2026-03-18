@@ -340,6 +340,7 @@ describe("SierpinskiClient", () => {
     expect(body.params.escrow_id).toBe(9001);
     expect(body.params.amount).toBe(1200);
     expect(body.params.auto_refund_at).toBe(2_000_000_000);
+    expect(body.params.caller_principal).toBe(0);
   });
 
   test("subscribeEscrowEvents subscribes and filters by escrowId", async () => {

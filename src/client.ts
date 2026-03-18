@@ -175,6 +175,7 @@ export class SierpinskiClient {
         params.auto_refund_at !== undefined
           ? toWireInteger(params.auto_refund_at, "auto_refund_at")
           : undefined,
+      caller_principal: 0,
     });
     return mapEscrowMutationResult(raw);
   }
@@ -183,6 +184,7 @@ export class SierpinskiClient {
     const raw = await this.#rpc<Record<string, unknown>>("fundEscrow", {
       escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
       actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
+      caller_principal: 0,
     });
     return mapEscrowMutationResult(raw);
   }
@@ -191,6 +193,7 @@ export class SierpinskiClient {
     const raw = await this.#rpc<Record<string, unknown>>("releaseEscrow", {
       escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
       actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
+      caller_principal: 0,
     });
     return mapEscrowMutationResult(raw);
   }
@@ -199,6 +202,7 @@ export class SierpinskiClient {
     const raw = await this.#rpc<Record<string, unknown>>("refundEscrow", {
       escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
       actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
+      caller_principal: 0,
     });
     return mapEscrowMutationResult(raw);
   }
@@ -207,6 +211,7 @@ export class SierpinskiClient {
     const raw = await this.#rpc<Record<string, unknown>>("disputeEscrow", {
       escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
       actor: params.actor !== undefined ? toWireActor(params.actor) : undefined,
+      caller_principal: 0,
     });
     return mapEscrowMutationResult(raw);
   }
@@ -216,6 +221,7 @@ export class SierpinskiClient {
       escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
       actor: toWireActor(params.actor),
       outcome: params.outcome,
+      caller_principal: 0,
     });
     return mapEscrowMutationResult(raw);
   }
