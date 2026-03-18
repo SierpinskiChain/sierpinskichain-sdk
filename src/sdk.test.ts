@@ -196,6 +196,20 @@ describe("SierpinskiClient", () => {
     expect(body.params.caller_principal).toBe(0);
   });
 
+  test("getBalance handles numeric and empty balance payloads", async () => {
+    fetchMock.mockResolvedValueOnce(
+      rpcOk({ address: "abcdef12.sp", balance: 100_000_000 }),
+    );
+    const numeric = await client.getBalance("abcdef12.sp");
+    expect(numeric).toBe(100_000_000n);
+
+    fetchMock.mockResolvedValueOnce(
+      rpcOk({ address: "abcdef12.sp", balance: null }),
+    );
+    const empty = await client.getBalance("abcdef12.sp");
+    expect(empty).toBe(0n);
+  });
+
   // ── getTransaction ──────────────────────────────────────────────────────
 
   test("getTransaction returns Transaction", async () => {

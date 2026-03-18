@@ -122,20 +122,23 @@ export class SierpinskiClient {
 
   /** Get balance for a .sp address. Returns micro-SPC as bigint. */
   async getBalance(address: string): Promise<bigint> {
-    const raw = await this.#rpc<{ address: string; balance: string }>(
+    const raw = await this.#rpc<Record<string, unknown>>(
       "getBalance",
       { address, caller_principal: 0 },
     );
-    return BigInt(raw.balance);
+    return parseBalance(raw);
   }
 
   /** Get full balance result including address echo. */
   async getBalanceFull(address: string): Promise<BalanceResult> {
-    const raw = await this.#rpc<{ address: string; balance: string }>(
+    const raw = await this.#rpc<Record<string, unknown>>(
       "getBalance",
       { address, caller_principal: 0 },
     );
-    return { address: raw.address, balance: BigInt(raw.balance) };
+    return {
+      address: typeof raw.address === "string" ? raw.address : address,
+      balance: parseBalance(raw),
+    };
   }
 
   /** Broadcast a signed transaction. */
@@ -413,6 +416,34 @@ function toBigInt(value: unknown): bigint {
 
 function toBoolean(value: unknown): boolean {
   return value === true || value === "true";
+}
+
+function parseBalance(raw: Record<string, unknown>): bigint {
+  const candidates = [
+    raw.balance,
+    raw.balance_uspc,
+    raw.uspc,
+    raw.amount,
+  ];
+  for (const candidate of candidates) {
+    if (candidate === undefined || candidate === null) continue;
+    if (typeof candidate === "bigint") return candidate;
+    if (typeof candidate === "number") return BigInt(Math.trunc(candidate));
+    if (typeof candidate === "string") {
+      const trimmed = candidate.trim();
+      if (trimmed.length > 0) return BigInt(trimmed);
+      continue;
+    }
+    if (typeof candidate === "object") {
+      const value = (candidate as Record<string, unknown>).value;
+      if (typeof value === "bigint") return value;
+      if (typeof value === "number") return BigInt(Math.trunc(value));
+      if (typeof value === "string" && value.trim().length > 0) {
+        return BigInt(value.trim());
+      }
+    }
+  }
+  return 0n;
 }
 
 function mapEscrowMutationResult(raw: Record<string, unknown>): EscrowMutationResult {
