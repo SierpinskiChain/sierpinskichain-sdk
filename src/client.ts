@@ -99,29 +99,32 @@ export class SierpinskiClient {
 
   /** Fetch node metadata (version, height, peers, sync status). */
   getNodeInfo(): Promise<NodeInfo> {
-    return this.#rpc<NodeInfo>("getNodeInfo");
+    return this.#rpc<NodeInfo>("getNodeInfo", { caller_principal: 0 });
   }
 
   /** Fetch block by height. */
   getBlock(height: number): Promise<Block> {
-    return this.#rpc<Block>("getBlock", { height });
+    return this.#rpc<Block>("getBlock", { height, caller_principal: 0 });
   }
 
   /** Fetch the latest block. */
   getLatestBlock(): Promise<Block> {
-    return this.#rpc<Block>("getLatestBlock");
+    return this.#rpc<Block>("getLatestBlock", { caller_principal: 0 });
   }
 
   /** Fetch transaction by hash. */
   getTransaction(txHash: string): Promise<Transaction> {
-    return this.#rpc<Transaction>("getTransaction", { txHash });
+    return this.#rpc<Transaction>("getTransaction", {
+      txHash,
+      caller_principal: 0,
+    });
   }
 
   /** Get balance for a .sp address. Returns micro-SPC as bigint. */
   async getBalance(address: string): Promise<bigint> {
     const raw = await this.#rpc<{ address: string; balance: string }>(
       "getBalance",
-      { address },
+      { address, caller_principal: 0 },
     );
     return BigInt(raw.balance);
   }
@@ -130,7 +133,7 @@ export class SierpinskiClient {
   async getBalanceFull(address: string): Promise<BalanceResult> {
     const raw = await this.#rpc<{ address: string; balance: string }>(
       "getBalance",
-      { address },
+      { address, caller_principal: 0 },
     );
     return { address: raw.address, balance: BigInt(raw.balance) };
   }
@@ -218,6 +221,7 @@ export class SierpinskiClient {
     const raw = await this.#rpc<Record<string, unknown>>("getEscrow", {
       escrow_id: toWireInteger(params.escrow_id, "escrow_id"),
       now: params.now !== undefined ? toWireInteger(params.now, "now") : undefined,
+      caller_principal: 0,
     });
     return mapEscrowRecord(raw);
   }

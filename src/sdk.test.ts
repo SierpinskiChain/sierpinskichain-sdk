@@ -135,9 +135,11 @@ describe("SierpinskiClient", () => {
     const body = JSON.parse(init.body as string) as {
       jsonrpc: string;
       method: string;
+      params: { caller_principal: number };
     };
     expect(body.method).toBe("getNodeInfo");
     expect(body.jsonrpc).toBe("2.0");
+    expect(body.params.caller_principal).toBe(0);
   });
 
   // ── getBlock ────────────────────────────────────────────────────────────
@@ -149,8 +151,9 @@ describe("SierpinskiClient", () => {
     expect(block.hash).toBe("deadbeef");
     const body = JSON.parse(
       (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string,
-    ) as { params: { height: number } };
+    ) as { params: { height: number; caller_principal: number } };
     expect(body.params.height).toBe(42);
+    expect(body.params.caller_principal).toBe(0);
   });
 
   test("getLatestBlock calls correct method", async () => {
@@ -158,8 +161,9 @@ describe("SierpinskiClient", () => {
     await client.getLatestBlock();
     const body = JSON.parse(
       (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string,
-    ) as { method: string };
+    ) as { method: string; params: { caller_principal: number } };
     expect(body.method).toBe("getLatestBlock");
+    expect(body.params.caller_principal).toBe(0);
   });
 
   // ── getBalance ──────────────────────────────────────────────────────────
@@ -171,6 +175,11 @@ describe("SierpinskiClient", () => {
     const bal = await client.getBalance("abcdef12.sp");
     expect(bal).toBe(5_000_000n);
     expect(typeof bal).toBe("bigint");
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string,
+    ) as { params: { address: string; caller_principal: number } };
+    expect(body.params.address).toBe("abcdef12.sp");
+    expect(body.params.caller_principal).toBe(0);
   });
 
   test("getBalanceFull includes address", async () => {
@@ -180,6 +189,11 @@ describe("SierpinskiClient", () => {
     const result = await client.getBalanceFull("abcdef12.sp");
     expect(result.address).toBe("abcdef12.sp");
     expect(result.balance).toBe(1234n);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string,
+    ) as { params: { address: string; caller_principal: number } };
+    expect(body.params.address).toBe("abcdef12.sp");
+    expect(body.params.caller_principal).toBe(0);
   });
 
   // ── getTransaction ──────────────────────────────────────────────────────
