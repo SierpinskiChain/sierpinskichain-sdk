@@ -49,5 +49,9 @@
     "provenance": true
   },
   "keywords": ["sierpinski", "sdk", "rpc", "blockchain", "react-hooks"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SierpinskiChain/sierpinskichain-sdk"
+  },
   "license": "MIT"
 }
