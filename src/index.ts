@@ -6,6 +6,7 @@ export type {
   Transaction,
   BalanceResult,
   SendTxResult,
+  SignedTx,
   NodeEvent,
   BlockEvent,
   TxEvent,

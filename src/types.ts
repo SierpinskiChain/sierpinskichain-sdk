@@ -70,6 +70,15 @@ export interface SendTxResult {
   reason?: string;
 }
 
+export interface SignedTx {
+  from: string;
+  to: string;
+  amount: bigint;
+  nonce: bigint;
+  signature: string;
+  pubkey: string;
+}
+
 // ── Client config ─────────────────────────────────────────────────────────────
 
 export interface SierpinskiClientConfig {

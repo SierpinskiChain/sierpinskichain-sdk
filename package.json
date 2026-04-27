@@ -1,21 +1,37 @@
 {
   "name": "@sierpinski/sdk",
   "version": "0.1.0",
-  "description": "TypeScript/ESM SDK for the Sierpinski network — typed RPC client, React hooks",
+  "description": "TypeScript SDK for the Sierpinski network — typed RPC client and React hooks",
   "type": "module",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./hooks": "./src/hooks.ts"
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./hooks": {
+      "types": "./dist/types/hooks.d.ts",
+      "import": "./dist/esm/hooks.js",
+      "require": "./dist/cjs/hooks.js"
+    }
   },
-  "files": ["src"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
+    "clean": "rm -rf dist",
+    "build:esm": "tsc -p tsconfig.build.esm.json",
+    "build:cjs": "tsc -p tsconfig.build.cjs.json",
+    "build:types": "tsc -p tsconfig.build.types.json",
+    "build:cjs-meta": "mkdir -p dist/cjs && printf '{\"type\":\"commonjs\"}\\n' > dist/cjs/package.json",
+    "build": "bun run clean && bun run build:esm && bun run build:cjs && bun run build:types && bun run build:cjs-meta",
+    "prepublishOnly": "bun run test && bun run typecheck && bun run build",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@sierpinski/wallet": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18.0.0"
@@ -27,6 +43,10 @@
     "typescript": "^5.4.0",
     "@types/bun": "latest",
     "@types/react": "^18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "keywords": ["sierpinski", "sdk", "rpc", "blockchain", "react-hooks"],
   "license": "MIT"

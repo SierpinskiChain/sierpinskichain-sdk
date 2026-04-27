@@ -25,8 +25,8 @@ import type {
   EscrowMutationResult,
   EscrowEvent,
   EscrowEventFilter,
+  SignedTx,
 } from "./types.js";
-import type { SignedTx } from "@sierpinski/wallet";
 
 export class SierpinskiClient {
   readonly #cfg: Required<SierpinskiClientConfig>;
