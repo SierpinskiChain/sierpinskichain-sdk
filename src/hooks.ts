@@ -3,8 +3,8 @@
  * Optional — only import if React is a peer dependency in the consuming app.
  *
  * Usage:
- *   import { SierpinskiClient } from "@sierpinski/sdk";
- *   import { useBalance, useBlock, useTx } from "@sierpinski/sdk/hooks";
+ *   import { SierpinskiClient } from "@sierpinskichain/sdk";
+ *   import { useBalance, useBlock, useTx } from "@sierpinskichain/sdk/hooks";
  */
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { SierpinskiClient } from "./client.js";

@@ -1,17 +1,17 @@
-# @sierpinski/sdk
+# @sierpinskichain/sdk
 
 TypeScript SDK for Sierpinski RPC and WebSocket APIs.
 
 ## Install
 
 ```bash
-npm install @sierpinski/sdk
+npm install @sierpinskichain/sdk
 ```
 
 ## Quick Start
 
 ```ts
-import { SierpinskiClient } from "@sierpinski/sdk";
+import { SierpinskiClient } from "@sierpinskichain/sdk";
 
 const client = new SierpinskiClient({
   nodeUrl: "https://wallet.testnet.sierpinskichain.com",
@@ -25,10 +25,10 @@ console.log(info.blockHeight);
 ## React Hooks
 
 ```ts
-import { useBalance } from "@sierpinski/sdk/hooks";
+import { useBalance } from "@sierpinskichain/sdk/hooks";
 ```
 
-`react` is an optional peer dependency only needed when importing `@sierpinski/sdk/hooks`.
+`react` is an optional peer dependency only needed when importing `@sierpinskichain/sdk/hooks`.
 
 ## Release Channels
 

@@ -1,5 +1,5 @@
 {
-  "name": "@sierpinski/sdk",
+  "name": "@sierpinskichain/sdk",
   "version": "0.1.0",
   "description": "TypeScript SDK for the Sierpinski network — typed RPC client and React hooks",
   "type": "module",
