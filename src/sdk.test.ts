@@ -1,6 +1,16 @@
 import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test";
 import { SierpinskiClient } from "./client.js";
 import type { NodeInfo, Block, Transaction } from "./types.js";
+import { HdWallet } from "./wallet.js";
+import { ContractClient } from "./contract.js";
+import { StorageClient } from "./storage.js";
+import { AiClient } from "./ai.js";
+import {
+  HdWallet as RootHdWallet,
+  ContractClient as RootContractClient,
+  StorageClient as RootStorageClient,
+  AiClient as RootAiClient,
+} from "./index.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -397,5 +407,41 @@ describe("SierpinskiClient", () => {
       client.disconnect();
       client.disconnect();
     }).not.toThrow();
+  });
+});
+
+describe("sdk umbrella subpath exports", () => {
+  test("wallet subpath exports HdWallet", () => {
+    expect(typeof HdWallet).toBe("function");
+  });
+
+  test("contract subpath exports ContractClient", () => {
+    expect(typeof ContractClient).toBe("function");
+  });
+
+  test("storage subpath exports StorageClient", () => {
+    expect(typeof StorageClient).toBe("function");
+  });
+
+  test("ai subpath exports AiClient", () => {
+    expect(typeof AiClient).toBe("function");
+  });
+});
+
+describe("sdk root umbrella exports", () => {
+  test("root exports HdWallet", () => {
+    expect(typeof RootHdWallet).toBe("function");
+  });
+
+  test("root exports ContractClient", () => {
+    expect(typeof RootContractClient).toBe("function");
+  });
+
+  test("root exports StorageClient", () => {
+    expect(typeof RootStorageClient).toBe("function");
+  });
+
+  test("root exports AiClient", () => {
+    expect(typeof RootAiClient).toBe("function");
   });
 });

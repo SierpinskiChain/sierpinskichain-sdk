@@ -1,4 +1,8 @@
 export { SierpinskiClient } from "./client.js";
+export { HdWallet } from "./wallet.js";
+export { ContractClient } from "./contract.js";
+export { StorageClient } from "./storage.js";
+export { AiClient } from "./ai.js";
 export type {
   SierpinskiClientConfig,
   NodeInfo,
@@ -28,3 +32,57 @@ export type {
   EscrowEvent,
   EscrowEventFilter,
 } from "./types.js";
+export type { HdKey } from "./wallet.js";
+export type { SignedTx as WalletSignedTx } from "./wallet.js";
+export type {
+  ContractClientConfig,
+  DeployParams,
+  DeployResult,
+  CallParams,
+  CallResult,
+  QueryParams,
+  QueryResult,
+  ContractEvent,
+  ContractEventFilter,
+  ContractEventHandler,
+  UnsubscribeFn as ContractUnsubscribeFn,
+  AbiMode,
+  AbiMethod,
+  ContractAbi,
+  WasmExportKind,
+  WasmExportEntry,
+  BindingGenerationOptions,
+} from "./contract.js";
+export type {
+  StorageClientConfig,
+  GetStorageInfoParams,
+  StorageProviderInfo,
+  RespondStorageChallengeParams,
+  RespondStorageChallengeResult,
+  StorageStats,
+  UploadFileParams,
+  UploadFileResult,
+  DownloadFileParams,
+  DownloadFileResult,
+  PinFileParams,
+  PinFileResult,
+  RetrievalProofParams,
+  RetrievalProofResult,
+  EstimateStorageCostParams,
+  EstimateStorageCostResult,
+} from "./storage.js";
+export type {
+  AiClientConfig,
+  FraudScoreResult,
+  TrustEconomyResult,
+  McpStatusResult,
+  McpRestartResult,
+  AiModel,
+  AiModelListResult,
+  LoadModelParams,
+  LoadModelResult,
+  UnloadModelParams,
+  UnloadModelResult,
+  InferParams,
+  InferResult,
+} from "./ai.js";

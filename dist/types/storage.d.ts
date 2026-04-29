@@ -1,0 +1,3 @@
+export { StorageClient } from "./storage-client.js";
+export type { StorageClientConfig, GetStorageInfoParams, StorageProviderInfo, RespondStorageChallengeParams, RespondStorageChallengeResult, StorageStats, UploadFileParams, UploadFileResult, DownloadFileParams, DownloadFileResult, PinFileParams, PinFileResult, RetrievalProofParams, RetrievalProofResult, EstimateStorageCostParams, EstimateStorageCostResult, } from "./storage-types.js";
+//# sourceMappingURL=storage.d.ts.map

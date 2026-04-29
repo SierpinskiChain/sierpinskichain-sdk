@@ -16,6 +16,26 @@
       "types": "./dist/types/hooks.d.ts",
       "import": "./dist/esm/hooks.js",
       "require": "./dist/cjs/hooks.js"
+    },
+    "./wallet": {
+      "types": "./dist/types/wallet.d.ts",
+      "import": "./dist/esm/wallet.js",
+      "require": "./dist/cjs/wallet.js"
+    },
+    "./contract": {
+      "types": "./dist/types/contract.d.ts",
+      "import": "./dist/esm/contract.js",
+      "require": "./dist/cjs/contract.js"
+    },
+    "./storage": {
+      "types": "./dist/types/storage.d.ts",
+      "import": "./dist/esm/storage.js",
+      "require": "./dist/cjs/storage.js"
+    },
+    "./ai": {
+      "types": "./dist/types/ai.d.ts",
+      "import": "./dist/esm/ai.js",
+      "require": "./dist/cjs/ai.js"
     }
   },
   "files": [
@@ -38,6 +58,10 @@
   },
   "peerDependenciesMeta": {
     "react": { "optional": true }
+  },
+  "dependencies": {
+    "@noble/curves": "^1.4.0",
+    "@noble/hashes": "^1.4.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0",

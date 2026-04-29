@@ -30,6 +30,17 @@ import { useBalance } from "@sierpinskichain/sdk/hooks";
 
 `react` is an optional peer dependency only needed when importing `@sierpinskichain/sdk/hooks`.
 
+## Umbrella Subpath Imports
+
+Install only the SDK package and import feature surfaces via subpaths:
+
+```ts
+import { HdWallet } from "@sierpinskichain/sdk/wallet";
+import { ContractClient } from "@sierpinskichain/sdk/contract";
+import { StorageClient } from "@sierpinskichain/sdk/storage";
+import { AiClient } from "@sierpinskichain/sdk/ai";
+```
+
 ## Release Channels
 
 - `next`: release candidates (`x.y.z-rc.n`)
