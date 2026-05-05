@@ -2,6 +2,10 @@
 
 All notable changes to `@sierpinskichain/sdk` are documented in this file.
 
+## 0.1.3 -2026-05-05
+
+Added generic `rpc()` now auto-adds `caller_principal: 0` for object params when missing.
+
 ## 0.1.2-next.0 - 2026-04-29
 
 ### Highlights

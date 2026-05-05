@@ -105,7 +105,7 @@ class SierpinskiClient {
     }
     /** Generic JSON-RPC call for SDK extension packages. */
     rpc(method, params) {
-        return this.#rpc(method, params);
+        return this.#rpc(method, withDefaultCallerPrincipal(params));
     }
     // ── Escrow RPC wrappers ────────────────────────────────────────────────
     async createEscrow(params) {
@@ -325,6 +325,18 @@ class SierpinskiClient {
 exports.SierpinskiClient = SierpinskiClient;
 function toWireActor(value) {
     return typeof value === "bigint" ? value.toString() : value;
+}
+function withDefaultCallerPrincipal(params) {
+    if (!params || typeof params !== "object" || Array.isArray(params)) {
+        return params;
+    }
+    const record = params;
+    if ("caller_principal" in record)
+        return params;
+    return {
+        ...record,
+        caller_principal: 0,
+    };
 }
 function toWireInteger(value, field) {
     if (value < 0n) {
