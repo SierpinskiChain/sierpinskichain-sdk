@@ -155,7 +155,7 @@ export class SierpinskiClient {
 
   /** Generic JSON-RPC call for SDK extension packages. */
   rpc<T>(method: string, params?: unknown): Promise<T> {
-    return this.#rpc<T>(method, params);
+    return this.#rpc<T>(method, withDefaultCallerPrincipal(params));
   }
 
   // ── Escrow RPC wrappers ────────────────────────────────────────────────
@@ -400,6 +400,18 @@ export class SierpinskiClient {
 
 function toWireActor(value: string | bigint): string {
   return typeof value === "bigint" ? value.toString() : value;
+}
+
+function withDefaultCallerPrincipal(params: unknown): unknown {
+  if (!params || typeof params !== "object" || Array.isArray(params)) {
+    return params;
+  }
+  const record = params as Record<string, unknown>;
+  if ("caller_principal" in record) return params;
+  return {
+    ...record,
+    caller_principal: 0,
+  };
 }
 
 function toWireInteger(value: bigint, field: string): number {

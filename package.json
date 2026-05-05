@@ -36,6 +36,11 @@
       "types": "./dist/types/ai.d.ts",
       "import": "./dist/esm/ai.js",
       "require": "./dist/cjs/ai.js"
+    },
+    "./wallet-ui": {
+      "types": "./dist/types/wallet-ui.d.ts",
+      "import": "./dist/esm/wallet-ui.js",
+      "require": "./dist/cjs/wallet-ui.js"
     }
   },
   "files": [

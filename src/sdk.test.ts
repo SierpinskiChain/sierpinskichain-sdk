@@ -323,9 +323,13 @@ describe("SierpinskiClient", () => {
     expect(out.accepted).toBe(true);
     const body = JSON.parse(
       (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string,
-    ) as { method: string; params: { contract: string } };
+    ) as {
+      method: string;
+      params: { contract: string; caller_principal: number };
+    };
     expect(body.method).toBe("deployContract");
     expect(body.params.contract).toBe("counter");
+    expect(body.params.caller_principal).toBe(0);
   });
 
   test("createEscrow serializes escrow bigint fields as JSON numbers", async () => {

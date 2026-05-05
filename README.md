@@ -39,6 +39,7 @@ import { HdWallet } from "@sierpinskichain/sdk/wallet";
 import { ContractClient } from "@sierpinskichain/sdk/contract";
 import { StorageClient } from "@sierpinskichain/sdk/storage";
 import { AiClient } from "@sierpinskichain/sdk/ai";
+import { WalletPanel } from "@sierpinskichain/sdk/wallet-ui";
 ```
 
 ## Release Channels

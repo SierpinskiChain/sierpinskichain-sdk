@@ -11,6 +11,7 @@ All notable changes to `@sierpinskichain/sdk` are documented in this file.
   - `@sierpinskichain/sdk/contract`
   - `@sierpinskichain/sdk/storage`
   - `@sierpinskichain/sdk/ai`
+  - `@sierpinskichain/sdk/wallet-ui`
 - Added root-level convenience exports from `@sierpinskichain/sdk`:
   - `HdWallet`
   - `ContractClient`
