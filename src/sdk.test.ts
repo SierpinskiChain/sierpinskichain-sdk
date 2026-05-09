@@ -334,6 +334,15 @@ describe("SierpinskiClient", () => {
     expect(err).toBeInstanceOf(RpcNetworkError);
   });
 
+  test("does not retry unsafe mutating rpc() method by default", async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError("timeout"));
+    const client = new SierpinskiClient({ nodeUrl: "http://localhost:40410" });
+    await expect(
+      client.rpc("submitSensitiveMutation", { payload: 1 }),
+    ).rejects.toBeInstanceOf(RpcNetworkError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   // ── Auth header ─────────────────────────────────────────────────────────
 
   test("sends Authorization header when authToken is set", async () => {

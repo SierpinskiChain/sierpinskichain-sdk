@@ -90,6 +90,7 @@ export class SierpinskiClient {
       maxRetries: config.maxRetries ?? 1,
       retryDelayMs: config.retryDelayMs ?? 0,
       idempotencyKeyPrefix: config.idempotencyKeyPrefix ?? "",
+      retryUnsafeMethods: config.retryUnsafeMethods ?? false,
       wsUrl: config.wsUrl ?? nodeUrl.replace(/^http/, "ws") + "/ws",
       reconnectIntervalMs: config.reconnectIntervalMs ?? 3_000,
     };
@@ -118,8 +119,12 @@ export class SierpinskiClient {
     }
 
     let lastRetryableError: RpcHttpError | RpcNetworkError | null = null;
-    for (let round = 0; round <= this.#cfg.maxRetries; round += 1) {
-      for (const rpcUrl of this.#rpcUrls) {
+    const retryableMethod = this.#cfg.retryUnsafeMethods || isSafeRetryMethod(method);
+    const rpcUrls = retryableMethod ? this.#rpcUrls : [this.#cfg.nodeUrl];
+    const maxRounds = retryableMethod ? this.#cfg.maxRetries : 0;
+
+    for (let round = 0; round <= maxRounds; round += 1) {
+      for (const rpcUrl of rpcUrls) {
         const result = await this.#rpcOnce<T>(rpcUrl, body, headers);
         if (result.ok) return result.value;
         if (!result.retryable) {
@@ -127,7 +132,7 @@ export class SierpinskiClient {
         }
         lastRetryableError = result.error;
       }
-      if (round < this.#cfg.maxRetries && this.#cfg.retryDelayMs > 0) {
+      if (round < maxRounds && this.#cfg.retryDelayMs > 0) {
         await sleep(this.#cfg.retryDelayMs);
       }
     }
@@ -515,6 +520,10 @@ function withDefaultCallerPrincipal(params: unknown): unknown {
     ...record,
     caller_principal: 0,
   };
+}
+
+function isSafeRetryMethod(method: string): boolean {
+  return method.startsWith("get");
 }
 
 function toWireInteger(value: bigint, field: string): number {

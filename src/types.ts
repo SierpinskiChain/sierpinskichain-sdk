@@ -96,6 +96,8 @@ export interface SierpinskiClientConfig {
   retryDelayMs?: number;
   /** Optional idempotency key prefix for RPC headers */
   idempotencyKeyPrefix?: string;
+  /** Allow retries/failover for mutating methods (default: false) */
+  retryUnsafeMethods?: boolean;
   /** WebSocket URL override (default: derived from nodeUrl) */
   wsUrl?: string;
   /** Auto-reconnect interval in ms (default: 3_000) */
