@@ -2,6 +2,12 @@
 
 All notable changes to `@sierpinskichain/sdk` are documented in this file.
 
+## Unreleased
+
+### Added
+- Publish `examples/` folder in npm package contents.
+- Added package-bundled example set including `wallet-ui.tsx` (`WalletPanel` integration).
+
 ## 0.1.3 -2026-05-05
 
 Added generic `rpc()` now auto-adds `caller_principal: 0` for object params when missing.

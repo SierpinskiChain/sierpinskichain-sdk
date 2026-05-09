@@ -48,3 +48,10 @@ import { WalletPanel } from "@sierpinskichain/sdk/wallet-ui";
 - `latest`: stable public release
 
 See `docs/sdk-public-release.md` for release process.
+
+## Published Examples
+
+The npm package includes runnable examples under:
+
+- `examples/`
+- `examples/wallet-ui.tsx` for `WalletPanel` integration
