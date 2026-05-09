@@ -1,5 +1,10 @@
 import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test";
-import { SierpinskiClient } from "./client.js";
+import {
+  SierpinskiClient,
+  RpcHttpError,
+  RpcNetworkError,
+  RpcResponseError,
+} from "./client.js";
 import type { NodeInfo, Block, Transaction } from "./types.js";
 import { HdWallet } from "./wallet.js";
 import { ContractClient } from "./contract.js";
@@ -261,14 +266,72 @@ describe("SierpinskiClient", () => {
 
   test("throws on RPC error response", async () => {
     fetchMock.mockResolvedValueOnce(rpcErr(-32601, "Method not found"));
-    await expect(client.getNodeInfo()).rejects.toThrow("Method not found");
+    const err = await client.getNodeInfo().catch((error) => error);
+    expect(err).toBeInstanceOf(RpcResponseError);
+    expect((err as RpcResponseError).code).toBe(-32601);
+    expect((err as RpcResponseError).message).toContain("Method not found");
   });
 
   test("throws on HTTP error", async () => {
     fetchMock.mockResolvedValueOnce(
       new Response("Unauthorized", { status: 401 }),
     );
-    await expect(client.getNodeInfo()).rejects.toThrow("HTTP 401");
+    const err = await client.getNodeInfo().catch((error) => error);
+    expect(err).toBeInstanceOf(RpcHttpError);
+    expect((err as RpcHttpError).status).toBe(401);
+  });
+
+  test("retries once on transient network failure", async () => {
+    fetchMock
+      .mockRejectedValueOnce(new TypeError("network down"))
+      .mockResolvedValueOnce(rpcOk(NODE_INFO));
+    const info = await client.getNodeInfo();
+    expect(info.nodeId).toBe("abc123");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  test("fails over to fallback node on HTTP 503", async () => {
+    const failover = new SierpinskiClient({
+      nodeUrl: "http://node-a:40410",
+      fallbackNodeUrls: ["http://node-b:40410"],
+    });
+    fetchMock
+      .mockResolvedValueOnce(new Response("unavailable", { status: 503 }))
+      .mockResolvedValueOnce(rpcOk(NODE_INFO));
+
+    const info = await failover.getNodeInfo();
+    expect(info.chainId).toBe("sierpinski-testnet");
+
+    const firstUrl = (fetchMock.mock.calls[0] as [string, RequestInit])[0];
+    const secondUrl = (fetchMock.mock.calls[1] as [string, RequestInit])[0];
+    expect(firstUrl).toBe("http://node-a:40410/rpc");
+    expect(secondUrl).toBe("http://node-b:40410/rpc");
+    failover.disconnect();
+  });
+
+  test("adds idempotency key header to RPC requests", async () => {
+    fetchMock.mockResolvedValueOnce(rpcOk(NODE_INFO));
+    const keyed = new SierpinskiClient({
+      nodeUrl: "http://localhost:40410",
+      idempotencyKeyPrefix: "wallet-sdk",
+    });
+    await keyed.getNodeInfo();
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers["X-Idempotency-Key"]).toBe("wallet-sdk:getNodeInfo:1");
+    keyed.disconnect();
+  });
+
+  test("network exhaustion throws typed RpcNetworkError", async () => {
+    fetchMock
+      .mockRejectedValueOnce(new TypeError("net-1"))
+      .mockRejectedValueOnce(new TypeError("net-2"));
+    const limited = new SierpinskiClient({
+      nodeUrl: "http://localhost:40410",
+      maxRetries: 1,
+    });
+    const err = await limited.getNodeInfo().catch((error) => error);
+    expect(err).toBeInstanceOf(RpcNetworkError);
   });
 
   // ── Auth header ─────────────────────────────────────────────────────────

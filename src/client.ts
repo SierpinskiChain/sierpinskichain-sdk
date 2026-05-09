@@ -28,8 +28,43 @@ import type {
   SignedTx,
 } from "./types.js";
 
+export class RpcResponseError extends Error {
+  readonly code: number;
+  readonly data?: unknown;
+
+  constructor(code: number, message: string, data?: unknown) {
+    super(`RPC error ${code}: ${message}`);
+    this.name = "RpcResponseError";
+    this.code = code;
+    this.data = data;
+  }
+}
+
+export class RpcHttpError extends Error {
+  readonly status: number;
+  readonly url: string;
+
+  constructor(status: number, url: string) {
+    super(`HTTP ${status} from node ${url}`);
+    this.name = "RpcHttpError";
+    this.status = status;
+    this.url = url;
+  }
+}
+
+export class RpcNetworkError extends Error {
+  readonly cause: unknown;
+
+  constructor(message: string, cause: unknown) {
+    super(message);
+    this.name = "RpcNetworkError";
+    this.cause = cause;
+  }
+}
+
 export class SierpinskiClient {
   readonly #cfg: Required<SierpinskiClientConfig>;
+  readonly #rpcUrls: string[];
   #rpcId = 0;
 
   // WS state
@@ -43,23 +78,33 @@ export class SierpinskiClient {
 
   constructor(config: SierpinskiClientConfig) {
     const nodeUrl = config.nodeUrl.replace(/\/$/, "");
+    const fallbackNodeUrls = (config.fallbackNodeUrls ?? [])
+      .map((url) => url.replace(/\/$/, ""))
+      .filter((url) => url.length > 0 && url !== nodeUrl);
+
     this.#cfg = {
       nodeUrl,
+      fallbackNodeUrls,
       authToken: config.authToken ?? "",
       timeoutMs: config.timeoutMs ?? 10_000,
+      maxRetries: config.maxRetries ?? 1,
+      retryDelayMs: config.retryDelayMs ?? 0,
+      idempotencyKeyPrefix: config.idempotencyKeyPrefix ?? "",
       wsUrl: config.wsUrl ?? nodeUrl.replace(/^http/, "ws") + "/ws",
       reconnectIntervalMs: config.reconnectIntervalMs ?? 3_000,
     };
+    this.#rpcUrls = [this.#cfg.nodeUrl, ...this.#cfg.fallbackNodeUrls];
   }
 
   // ── HTTP RPC ─────────────────────────────────────────────────────────────
 
   async #rpc<T>(method: string, params?: unknown): Promise<T> {
+    const requestId = ++this.#rpcId;
     const body: RpcRequest = {
       jsonrpc: "2.0",
       method,
       params,
-      id: ++this.#rpcId,
+      id: requestId,
     };
 
     const headers: Record<string, string> = {
@@ -68,31 +113,76 @@ export class SierpinskiClient {
     if (this.#cfg.authToken) {
       headers["Authorization"] = `Bearer ${this.#cfg.authToken}`;
     }
+    if (this.#cfg.idempotencyKeyPrefix) {
+      headers["X-Idempotency-Key"] = `${this.#cfg.idempotencyKeyPrefix}:${method}:${requestId}`;
+    }
 
+    let lastRetryableError: RpcHttpError | RpcNetworkError | null = null;
+    for (let round = 0; round <= this.#cfg.maxRetries; round += 1) {
+      for (const rpcUrl of this.#rpcUrls) {
+        const result = await this.#rpcOnce<T>(rpcUrl, body, headers);
+        if (result.ok) return result.value;
+        if (!result.retryable) {
+          throw result.error;
+        }
+        lastRetryableError = result.error;
+      }
+      if (round < this.#cfg.maxRetries && this.#cfg.retryDelayMs > 0) {
+        await sleep(this.#cfg.retryDelayMs);
+      }
+    }
+
+    throw new RpcNetworkError(
+      "RPC request exhausted retries and fallback endpoints",
+      lastRetryableError,
+    );
+  }
+
+  async #rpcOnce<T>(
+    rpcUrl: string,
+    body: RpcRequest,
+    headers: Record<string, string>,
+  ): Promise<RpcAttempt<T>> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.#cfg.timeoutMs);
 
     let res: globalThis.Response;
     try {
-      res = await fetch(`${this.#cfg.nodeUrl}/rpc`, {
+      res = await fetch(`${rpcUrl}/rpc`, {
         method: "POST",
         headers,
         body: JSON.stringify(body),
         signal: controller.signal,
       });
+    } catch (error) {
+      clearTimeout(timer);
+      return {
+        ok: false,
+        retryable: true,
+        error: new RpcNetworkError(`Network error while calling ${rpcUrl}`, error),
+      };
     } finally {
       clearTimeout(timer);
     }
 
     if (!res.ok) {
-      throw new Error(`HTTP ${res.status} from node`);
+      const httpError = new RpcHttpError(res.status, `${rpcUrl}/rpc`);
+      return {
+        ok: false,
+        retryable: res.status >= 500 || res.status === 429,
+        error: httpError,
+      };
     }
 
-    const json = (await res.json()) as RpcResponse<T>;
+    const json = await parseRpcResponse<T>(res);
     if (json.error) {
-      throw new Error(`RPC error ${json.error.code}: ${json.error.message}`);
+      return {
+        ok: false,
+        retryable: false,
+        error: new RpcResponseError(json.error.code, json.error.message, json.error.data),
+      };
     }
-    return json.result as T;
+    return { ok: true, value: json.result as T };
   }
 
   // ── Public API ───────────────────────────────────────────────────────────
@@ -396,6 +486,19 @@ export class SierpinskiClient {
       }
     };
   }
+}
+
+type RpcAttempt<T> =
+  | { ok: true; value: T }
+  | { ok: false; retryable: true; error: RpcHttpError | RpcNetworkError }
+  | { ok: false; retryable: false; error: RpcResponseError | RpcHttpError };
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+async function parseRpcResponse<T>(res: Response): Promise<RpcResponse<T>> {
+  return (await res.json()) as RpcResponse<T>;
 }
 
 function toWireActor(value: string | bigint): string {

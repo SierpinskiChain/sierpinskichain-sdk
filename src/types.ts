@@ -84,10 +84,18 @@ export interface SignedTx {
 export interface SierpinskiClientConfig {
   /** Node RPC URL, e.g. "http://localhost:40410" */
   nodeUrl: string;
+  /** Optional fallback RPC URLs tried after primary for retryable failures */
+  fallbackNodeUrls?: string[];
   /** Optional bearer token for authenticated nodes */
   authToken?: string;
   /** Timeout in ms for HTTP requests (default: 10_000) */
   timeoutMs?: number;
+  /** Max retry rounds for retryable network/http failures (default: 1) */
+  maxRetries?: number;
+  /** Delay between retry rounds in ms (default: 0) */
+  retryDelayMs?: number;
+  /** Optional idempotency key prefix for RPC headers */
+  idempotencyKeyPrefix?: string;
   /** WebSocket URL override (default: derived from nodeUrl) */
   wsUrl?: string;
   /** Auto-reconnect interval in ms (default: 3_000) */
