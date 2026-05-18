@@ -4,6 +4,8 @@ All notable changes to `@sierpinskichain/sdk` are documented in this file.
 
 ## Unreleased
 
+## 0.1.6 - 2026-05-19
+
 ### Added
 - Publish `examples/` folder in npm package contents.
 - Added package-bundled example set including `wallet-ui.tsx` (`WalletPanel` integration).
