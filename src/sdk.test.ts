@@ -239,7 +239,7 @@ describe("SierpinskiClient", () => {
 
   // ── sendTransaction ─────────────────────────────────────────────────────
 
-  test("sendTransaction serializes bigints as strings", async () => {
+  test("sendTransaction serializes bigints as safe integers", async () => {
     fetchMock.mockResolvedValueOnce(
       rpcOk({ txHash: "newhash", status: "accepted" }),
     );
@@ -256,10 +256,10 @@ describe("SierpinskiClient", () => {
 
     const body = JSON.parse(
       (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string,
-    ) as { params: { amount: string; nonce: string } };
-    // bigints must be serialized as strings (JSON can't represent bigint)
-    expect(body.params.amount).toBe("500");
-    expect(body.params.nonce).toBe("3");
+    ) as { params: { amount: number; nonce: number } };
+    // bigints must be serialized as safe integers (node expects numbers)
+    expect(body.params.amount).toBe(500);
+    expect(body.params.nonce).toBe(3);
   });
 
   // ── RPC error handling ──────────────────────────────────────────────────
