@@ -385,7 +385,7 @@ export class SierpinskiClient {
         this.#wsConnecting = false;
         // Send subscriptions for each topic we have handlers for
         for (const topic of this.#wsHandlers.keys()) {
-          ws.send(JSON.stringify({ type: "subscribe", topic }));
+          ws.send(JSON.stringify({ action: "subscribe", topic }));
         }
       };
 
