@@ -241,8 +241,8 @@ export class SierpinskiClient {
     return this.#rpc<SendTxResult>("sendTransaction", {
       from: tx.from,
       to: tx.to,
-      amount: tx.amount.toString(),
-      nonce: tx.nonce.toString(),
+      amount: toWireInteger(tx.amount, "amount"),
+      nonce: toWireInteger(tx.nonce, "nonce"),
       signature: tx.signature,
       pubkey: tx.pubkey,
     });
