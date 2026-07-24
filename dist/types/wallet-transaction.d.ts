@@ -13,7 +13,7 @@ export interface SignedTx {
     /** 32-byte sender public key, lowercase hex */
     pubkey: string;
 }
-/** The bytes that are signed: from(11) + to(11) + amount(8 LE) + nonce(8 LE) */
+/** The bytes that are signed: from(15) + to(15) + amount(8 LE) + nonce(8 LE) */
 export declare function signingBytes(from: string, to: string, amount: bigint, nonce: bigint): Uint8Array;
 /** Sign a transfer and return a SignedTx. */
 export declare function signTransaction(key: HdKey, from: string, to: string, amount: bigint, nonce: bigint): SignedTx;

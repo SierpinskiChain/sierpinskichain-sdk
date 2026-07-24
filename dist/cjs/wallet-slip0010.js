@@ -20,10 +20,10 @@ exports.seedFromEntropy = seedFromEntropy;
 const ed25519_1 = require("@noble/curves/ed25519");
 const hmac_1 = require("@noble/hashes/hmac");
 const sha512_1 = require("@noble/hashes/sha512");
-const sha256_1 = require("@noble/hashes/sha256");
+const blake3_1 = require("@noble/hashes/blake3");
 exports.HARDENED = 0x80000000;
 exports.COIN_TYPE = 709; // Sierpinski BIP-44 coin type
-exports.ADDRESS_LEN = 11; // "xxxxxxxx.sp"
+exports.ADDRESS_LEN = 15; // "xxxxxxxxxxxx.sp"
 // ── Key derivation ────────────────────────────────────────────────────────────
 /** Derive the master key from a 64-byte seed (SLIP-0010 spec). */
 function masterFromSeed(seed) {
@@ -67,13 +67,13 @@ function verify(signature, message, publicKey) {
 }
 // ── Address derivation ────────────────────────────────────────────────────────
 /**
- * Compute the Sierpinski address: lowercase hex of SHA-256(pubkey)[0..4] + ".sp"
- * e.g. "a1b2c3d4.sp"
+ * Compute the Sierpinski address: lowercase hex of Blake3(pubkey)[0..6] + ".sp"
+ * e.g. "a1b2c3d4e5f6.sp"
  */
 function toAddress(key) {
     const pubkey = toPublicKeyBytes(key);
-    const hash = (0, sha256_1.sha256)(pubkey);
-    const hex = Array.from(hash.slice(0, 4), (b) => b.toString(16).padStart(2, "0")).join("");
+    const hash = (0, blake3_1.blake3)(pubkey);
+    const hex = Array.from(hash.slice(0, 6), (b) => b.toString(16).padStart(2, "0")).join("");
     return `${hex}.sp`;
 }
 // ── Seed stretching ───────────────────────────────────────────────────────────

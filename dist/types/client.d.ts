@@ -5,6 +5,20 @@
  * WebSocket: optional; auto-reconnects on disconnect.
  */
 import type { SierpinskiClientConfig, NodeInfo, Block, Transaction, BalanceResult, SendTxResult, NodeEvent, EventHandler, UnsubscribeFn, SubscriptionTopic, CreateEscrowParams, EscrowActionParams, ResolveDisputeParams, GetEscrowParams, EscrowRecord, EscrowMutationResult, EscrowEvent, EscrowEventFilter, SignedTx } from "./types.js";
+export declare class RpcResponseError extends Error {
+    readonly code: number;
+    readonly data?: unknown;
+    constructor(code: number, message: string, data?: unknown);
+}
+export declare class RpcHttpError extends Error {
+    readonly status: number;
+    readonly url: string;
+    constructor(status: number, url: string);
+}
+export declare class RpcNetworkError extends Error {
+    readonly cause: unknown;
+    constructor(message: string, cause: unknown);
+}
 export declare class SierpinskiClient {
     #private;
     constructor(config: SierpinskiClientConfig);

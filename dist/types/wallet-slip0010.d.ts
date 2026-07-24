@@ -1,6 +1,6 @@
 export declare const HARDENED = 2147483648;
 export declare const COIN_TYPE = 709;
-export declare const ADDRESS_LEN = 11;
+export declare const ADDRESS_LEN = 15;
 export interface HdKey {
     readonly privateKey: Uint8Array;
     readonly chainCode: Uint8Array;
@@ -21,8 +21,8 @@ export declare function sign(key: HdKey, message: Uint8Array): Uint8Array;
 /** Verify an ed25519 signature. */
 export declare function verify(signature: Uint8Array, message: Uint8Array, publicKey: Uint8Array): boolean;
 /**
- * Compute the Sierpinski address: lowercase hex of SHA-256(pubkey)[0..4] + ".sp"
- * e.g. "a1b2c3d4.sp"
+ * Compute the Sierpinski address: lowercase hex of Blake3(pubkey)[0..6] + ".sp"
+ * e.g. "a1b2c3d4e5f6.sp"
  */
 export declare function toAddress(key: HdKey): string;
 /** Stretch 16-byte entropy to a 64-byte seed (matches Zig wallet). */
