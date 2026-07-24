@@ -20,15 +20,15 @@ export interface SignedTx {
   pubkey: string;
 }
 
-/** The bytes that are signed: from(11) + to(11) + amount(8 LE) + nonce(8 LE) */
+/** The bytes that are signed: from(15) + to(15) + amount(8 LE) + nonce(8 LE) */
 export function signingBytes(from: string, to: string, amount: bigint, nonce: bigint): Uint8Array {
-  const buf = new Uint8Array(38);
+  const buf = new Uint8Array(46);
   const enc = new TextEncoder();
-  buf.set(enc.encode(from.slice(0, 11)), 0);
-  buf.set(enc.encode(to.slice(0, 11)), 11);
+  buf.set(enc.encode(from.slice(0, 15)), 0);
+  buf.set(enc.encode(to.slice(0, 15)), 15);
   const view = new DataView(buf.buffer);
-  view.setBigUint64(22, amount, true /* little-endian */);
-  view.setBigUint64(30, nonce, true /* little-endian */);
+  view.setBigUint64(30, amount, true /* little-endian */);
+  view.setBigUint64(38, nonce, true /* little-endian */);
   return buf;
 }
 
