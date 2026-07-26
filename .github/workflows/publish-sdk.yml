@@ -1,23 +1,17 @@
 name: Publish to npm
 
 on:
-  push:
-    branches: [sdk-mirror]
-    paths:
-      - "package.json"
   workflow_dispatch:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-      - run: npm pkg fix
-      - run: npm publish --provenance --access public --ignore-scripts
+      - run: npm publish --access public --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
