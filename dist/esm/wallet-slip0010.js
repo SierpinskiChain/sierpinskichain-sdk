@@ -10,6 +10,7 @@ import { ed25519 } from "@noble/curves/ed25519";
 import { hmac } from "@noble/hashes/hmac";
 import { sha512 } from "@noble/hashes/sha512";
 import { blake3 } from "@noble/hashes/blake3";
+import { base58Encode } from "./base58.js";
 export const HARDENED = 0x80000000;
 export const COIN_TYPE = 709; // Sierpinski BIP-44 coin type
 export const ADDRESS_LEN = 15; // "xxxxxxxxxxxx.sp"
@@ -56,14 +57,14 @@ export function verify(signature, message, publicKey) {
 }
 // ── Address derivation ────────────────────────────────────────────────────────
 /**
- * Compute the Sierpinski address: lowercase hex of Blake3(pubkey)[0..6] + ".sp"
- * e.g. "a1b2c3d4e5f6.sp"
+ * Compute the Sierpinski address: Base58 of Blake3(pubkey)[0..10] + ".sp" (12 chars)
+ * e.g. "AGjXpZq4RmTf.sp"
  */
 export function toAddress(key) {
     const pubkey = toPublicKeyBytes(key);
     const hash = blake3(pubkey);
-    const hex = Array.from(hash.slice(0, 6), (b) => b.toString(16).padStart(2, "0")).join("");
-    return `${hex}.sp`;
+    const b58 = base58Encode(hash.slice(0, 10));
+    return `${b58.slice(0, 12)}.sp`;
 }
 // ── Seed stretching ───────────────────────────────────────────────────────────
 /** Stretch 16-byte entropy to a 64-byte seed (matches Zig wallet). */

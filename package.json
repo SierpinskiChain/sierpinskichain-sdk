@@ -41,6 +41,16 @@
       "types": "./dist/types/wallet-ui.d.ts",
       "import": "./dist/esm/wallet-ui.js",
       "require": "./dist/cjs/wallet-ui.js"
+    },
+    "./triwallet": {
+      "types": "./dist/types/triwallet.d.ts",
+      "import": "./dist/esm/triwallet.js",
+      "require": "./dist/cjs/triwallet.js"
+    },
+    "./triwallet-react": {
+      "types": "./dist/types/triwallet-react.d.ts",
+      "import": "./dist/esm/triwallet-react.js",
+      "require": "./dist/cjs/triwallet-react.js"
     }
   },
   "files": [
