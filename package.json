@@ -1,6 +1,6 @@
 {
   "name": "@sierpinskichain/sdk",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "TypeScript SDK for the Sierpinski network — typed RPC client and React hooks",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -51,6 +51,11 @@
       "types": "./dist/types/triwallet-react.d.ts",
       "import": "./dist/esm/triwallet-react.js",
       "require": "./dist/cjs/triwallet-react.js"
+    },
+    "./kyc": {
+      "types": "./dist/types/kyc.d.ts",
+      "import": "./dist/esm/kyc.js",
+      "require": "./dist/cjs/kyc.js"
     }
   },
   "files": [
