@@ -20,4 +20,4 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
       - run: npm pkg fix
-      - run: npm publish --access public --ignore-scripts
+      - run: npm publish --provenance --access public --ignore-scripts
